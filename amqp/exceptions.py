@@ -16,7 +16,25 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
 from __future__ import absolute_import, unicode_literals
 
-from struct import pack, unpack
+def _fix_struct():
+    from struct import pack as real_pack, unpack as real_unpack
+    import sys
+    from functools import wraps
+    if sys.version >= '2.7.7':
+        return real_pack, real_unpack
+    elif sys.version <= '2.7.3':
+        cast = str
+    else:
+        cast = unicode
+
+    def accept(func):
+        @wraps(func)
+        def inner(fmt, *args, **kwargs):
+            return func(cast(fmt), *args, **kwargs)
+        return inner
+    return accept(real_pack), accept(real_unpack)
+pack, unpack = _fix_struct()
+del _fix_struct
 
 from .five import python_2_unicode_compatible
 
