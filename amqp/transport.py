@@ -154,13 +154,16 @@ class _AbstractTransport(object):
             self._set_socket_options(socket_settings)
 
             # set socket timeouts
-            for timeout, interval in ((socket.SO_SNDTIMEO, write_timeout),
-                                      (socket.SO_RCVTIMEO, read_timeout)):
-                if interval is not None:
-                    self.sock.setsockopt(
-                        socket.SOL_SOCKET, timeout,
-                        struct.pack(b'll', interval, 0),
-                    )
+            if write_timeout and hasattr(socket, 'SO_SNDTIMEO'):
+                self.sock.setsockopt(
+                    socket.SOL_SOCKET, socket.SO_SNDTIMEO,
+                    struct.pack(b'll', write_timeout, 0),
+                )
+            if read_timeout and hasattr(socket, 'SO_RCVTIMEO'):
+                self.sock.setsockopt(
+                    socket.SOL_SOCKET, socket.SO_RCVTIMEO,
+                    struct.pack(b'll', read_timeout, 0),
+                )
             self._setup_transport()
 
             self._write(AMQP_PROTOCOL_HEADER)
